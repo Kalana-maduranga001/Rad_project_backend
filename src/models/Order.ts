@@ -5,7 +5,16 @@ interface IOrderProduct {
     title: string;
     quantity: number;
     price: number;
+    size: string;  // ✅ Add this
 }
+
+const orderProductSchema = new Schema<IOrderProduct>({
+    product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+    title: { type: String, required: true },
+    quantity: { type: Number, required: true },
+    price: { type: Number, required: true },
+    size: { type: String, required: true }  // ✅ Add this
+})
 
 export enum Status {
     PENDING = "PENDING",
@@ -21,13 +30,6 @@ export interface IOrder extends Document {
     status: Status;
     createdAt: Date;
 }
-
-const orderProductSchema = new Schema<IOrderProduct>({
-    product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
-    title: { type: String, required: true },
-    quantity: { type: Number, required: true },
-    price: { type: Number, required: true }
-})
 
 const orderSchema = new Schema<IOrder>({
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },

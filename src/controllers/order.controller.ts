@@ -26,16 +26,29 @@ export const saveOrder = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ message: "Invalid quantity" })
       }
 
+      // ✅ Validate size is provided
+      if (!it.size) {
+        return res.status(400).json({ message: "Size is required for each item" })
+      }
+
       const p = await Product.findById(it.productId)
       if (!p) {
         return res.status(400).json({ message: `Product not found: ${it.productId}` })
+      }
+
+      // ✅ Validate selected size exists for this product
+      if (!p.sizes.includes(it.size)) {
+        return res.status(400).json({ 
+          message: `Invalid size ${it.size} for product ${p.title}` 
+        })
       }
 
       itemsDetailed.push({
         product: p._id,
         title: p.title,
         quantity: it.quantity,
-        price: p.price
+        price: p.price,
+        size: it.size  // ✅ Add this
       })
 
       total += p.price * it.quantity

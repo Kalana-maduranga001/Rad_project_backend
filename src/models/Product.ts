@@ -20,7 +20,7 @@ export interface IProduct extends Document {
     description?: string,
     gender: Gender,
     category: Category,
-    size: string,
+    sizes: string[],  // ✅ Changed from size: string
     price: number,
     stock: number,
     imageUrls: string[],
@@ -32,7 +32,7 @@ const productSchema: Schema = new Schema<IProduct>({
     description: { type: String },
     category: { type: String, enum: Object.values(Category), required: true },
     gender: { type: String, enum: Object.values(Gender), required: true },
-    size: { type: String, required: true },
+    sizes: { type: [String], required: true },  // ✅ Changed
     price: { type: Number, required: true },
     stock: { type: Number, default: 0 },
     imageUrls: { type: [String], required: true },

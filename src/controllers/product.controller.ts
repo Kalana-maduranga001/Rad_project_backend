@@ -15,19 +15,24 @@ export const saveProduct = async (req: AuthRequest, res: Response) => {
       gender,
       category,
       fragrance,
-      size,
+      sizes,  // ✅ Changed from size
       price,
       stock
     } = req.body
 
-    // 🔐 Required field validation
-    if (!title || !gender || !category || !size || !price) {
+    // 🔍 Required field validation
+    if (!title || !gender || !category || !sizes || !price) {  // ✅ Changed
       return res.status(400).json({
         message: "Missing required fields"
       })
     }
 
-    // 🔐 Enum validation
+    // ✅ Validate sizes is an array
+    if (!Array.isArray(sizes) || sizes.length === 0) {
+      return res.status(400).json({ message: "Sizes must be a non-empty array" })
+    }
+
+    // 🔍 Enum validation
     if (!Object.values(Gender).includes(gender)) {
       return res.status(400).json({ message: "Invalid gender value" })
     }
@@ -65,7 +70,7 @@ export const saveProduct = async (req: AuthRequest, res: Response) => {
       gender,
       category,
       fragrance,
-      size,
+      sizes,  // ✅ Changed
       price,
       stock: stock ?? 0,
       imageUrls
@@ -95,7 +100,7 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
       gender,
       category,
       fragrance,
-      size,
+      sizes,  // ✅ Changed
       price,
       stock
     } = req.body
@@ -106,6 +111,11 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
 
     if (category && !Object.values(Category).includes(category)) {
       return res.status(400).json({ message: "Invalid category value" })
+    }
+
+    // ✅ Validate sizes if provided
+    if (sizes && (!Array.isArray(sizes) || sizes.length === 0)) {
+      return res.status(400).json({ message: "Sizes must be a non-empty array" })
     }
 
     const product = await Product.findById(productId)
@@ -143,7 +153,7 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
         gender,
         category,
         fragrance,
-        size,
+        sizes,  // ✅ Changed
         price,
         stock,
         imageUrls
