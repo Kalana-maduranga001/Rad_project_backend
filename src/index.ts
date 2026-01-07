@@ -15,7 +15,7 @@ const app = express()
 app.use(express.json())
 app.use(
   cors({
-    origin: ["http://localhost:5173","https://rad-project-fronted-3wp3.vercel.app"],
+    origin: ["http://localhost:5173","https://rad-project-fronted.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
   })
 )
