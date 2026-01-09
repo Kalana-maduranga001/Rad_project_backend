@@ -133,9 +133,25 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     const { status } = req.body
 
     const order = await Order.findById(orderId)
-
     if (!order) {
       return res.status(404).json({ message: "Order not found" })
+    }
+
+    // ✅ Reduce stock ONLY when confirming
+    if (order.status !== "CONFIRMED" && status === "CONFIRMED") {
+      for (const item of order.products) {
+        const product = await Product.findById(item.product)
+        if (!product) continue
+
+        if (product.stock < item.quantity) {
+          return res.status(400).json({
+            message: `Not enough stock for ${product.title}`
+          })
+        }
+
+        product.stock = product.stock - item.quantity
+        await product.save()
+      }
     }
 
     order.status = status
@@ -143,9 +159,11 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     res.json(order)
   } catch (error) {
+    console.error(error)
     res.status(500).json({ message: "Failed to update status" })
   }
 }
+
 
 // order.controller.ts
 export const getOrderById = async (req: Request, res: Response) => {
@@ -476,3 +494,4 @@ export const generateOrderReportPDF = async (
     res.status(500).json({ message: "Failed to generate PDF report" })
   }
 }
+
