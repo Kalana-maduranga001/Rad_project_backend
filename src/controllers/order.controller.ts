@@ -5,8 +5,10 @@ import { Product } from "../models/Product";
 import { User } from "../models/User";
 import PDFDocument from "pdfkit"
 
+
 export const saveOrder = async (req: AuthRequest, res: Response) => {
   try {
+    // ✅ 1. Check user authentication
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" })
     }
@@ -14,46 +16,64 @@ export const saveOrder = async (req: AuthRequest, res: Response) => {
     const userId = req.user.sub
     const { items } = req.body
 
+    // ✅ 2. Validate order items
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: "Invalid order items" })
     }
 
     let total = 0
-    const itemsDetailed = []
+    const itemsDetailed: any[] = []
 
+    // ✅ 3. Loop through items
     for (const it of items) {
-      if (it.quantity <= 0) {
+      // Quantity validation
+      if (!it.quantity || it.quantity <= 0) {
         return res.status(400).json({ message: "Invalid quantity" })
       }
 
-      // ✅ Validate size is provided
+      // Size validation
       if (!it.size) {
-        return res.status(400).json({ message: "Size is required for each item" })
-      }
-
-      const p = await Product.findById(it.productId)
-      if (!p) {
-        return res.status(400).json({ message: `Product not found: ${it.productId}` })
-      }
-
-      // ✅ Validate selected size exists for this product
-      if (!p.sizes.includes(it.size)) {
-        return res.status(400).json({ 
-          message: `Invalid size ${it.size} for product ${p.title}` 
+        return res.status(400).json({
+          message: "Size is required for each item"
         })
       }
 
+      // Product lookup
+      const p = await Product.findById(it.productId)
+      if (!p) {
+        return res.status(400).json({
+          message: `Product not found: ${it.productId}`
+        })
+      }
+
+      // Size exists validation
+      if (!p.sizes.includes(it.size)) {
+        return res.status(400).json({
+          message: `Invalid size ${it.size} for product ${p.title}`
+        })
+      }
+
+      // ✅ 4. STOCK CHECK (DO NOT REDUCE)
+      if (p.stock < it.quantity) {
+        return res.status(400).json({
+          message: `Only ${p.stock} items left for ${p.title}`
+        })
+      }
+
+      // ✅ 5. Prepare order item
       itemsDetailed.push({
         product: p._id,
         title: p.title,
         quantity: it.quantity,
         price: p.price,
-        size: it.size  // ✅ Add this
+        size: it.size
       })
 
+      // Calculate total
       total += p.price * it.quantity
     }
 
+    // ✅ 6. Create order (PENDING)
     const order = new Order({
       user: userId,
       products: itemsDetailed,
@@ -61,12 +81,17 @@ export const saveOrder = async (req: AuthRequest, res: Response) => {
       status: "PENDING"
     })
 
+    // ✅ 7. Save order
     const savedOrder = await order.save()
 
+    // ✅ 8. Response
     res.status(201).json(savedOrder)
+
   } catch (error) {
     console.error(error)
-    res.status(500).json({ message: "Internal server error" })
+    res.status(500).json({
+      message: "Internal server error"
+    })
   }
 }
 
